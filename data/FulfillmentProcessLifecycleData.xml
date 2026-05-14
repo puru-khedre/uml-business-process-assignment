@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-engine-xml>
+    <!-- Result of Task 1.3 & 2.3 (Picking Complete) -->
+    <Picklist picklistId="PL_6001" statusId="PLST_PICKED" facilityId="GB_WH_01" fixedAssetId="CART_001"/>
+    
+    <!-- Order 5001 mapped to Slot 1 -->
+    <PicklistBin picklistBinId="BIN_101" picklistId="PL_6001" binLocationNumber="1" primaryOrderId="ORD_5001"/>
+    <PicklistItem picklistId="PL_6001" picklistBinId="BIN_101" orderId="ORD_5001" orderItemSeqId="00001" inventoryItemId="INV_1001" quantity="1"/>
+    <!-- Manual also picked -->
+    <PicklistItem picklistId="PL_6001" picklistBinId="BIN_101" orderId="ORD_5001" orderItemSeqId="00001" productId="GB_MANUAL_ENG" quantity="1"/>
+
+    <!-- Result of Task 3.3 (Packing & Documentation) -->
+    <Shipment shipmentId="SHP_7001" shipmentTypeId="SALES_SHIPMENT" statusId="SHIPMENT_SHIPPED" primaryOrderId="ORD_5001"/>
+    <ShipmentItem shipmentId="SHP_7001" shipmentItemSeqId="00001" productId="GB_MAIN_01" quantity="1"/>
+    
+    <ShipmentPackage shipmentId="SHP_7001" shipmentPackageSeqId="00001" shipmentBoxTypeId="GB_STANDARD_BOX"/>
+    <ShipmentPackageContent shipmentId="SHP_7001" shipmentPackageSeqId="00001" shipmentItemSeqId="00001" quantity="1"/>
+    
+    <!-- Final Inventory Deduction (Task 3.4) -->
+    <ItemIssuance itemIssuanceId="ISS_8001" orderId="ORD_5001" orderItemSeqId="00001" shipmentId="SHP_7001" inventoryItemId="INV_1001" quantity="1" issuedDate="2026-05-14 10:40:00.000"/>
+    
+    <!-- Final State of Order Header (Task 3.4) -->
+    <OrderHeader orderId="ORD_5001" statusId="ORDER_COMPLETED"/>
+</entity-engine-xml>

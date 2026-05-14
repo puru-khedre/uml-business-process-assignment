@@ -1,0 +1,62 @@
+@startuml
+skinparam {
+    DefaultFontName "Segoe UI"
+    DefaultFontSize 12
+    BackgroundColor white
+    ActivityBackgroundColor #FFFFFF
+    ActivityBorderColor #2C3E50
+    ActivityFontSize 13
+    ArrowColor #2C3E50
+    DiamondBackgroundColor #FFFFFF
+    DiamondBorderColor #2C3E50
+    RoundCorner 15
+    Shadowing false
+}
+
+title STAGE 3: PACKING & INVOICING (Final Fulfillment)
+
+start
+
+partition #F4FDFB "Task 3.1: Reception" {
+    :Packer scans the **fixedAssetId** of the incoming Cart;
+    :System retrieves and displays all **PicklistBin** entries for that cart;
+    :Identify priority orders based on shipping requirements;
+}
+
+partition #F0F8FF "Task 3.2: Systematic Packing" {
+    repeat
+        :Select and scan a specific **PicklistBin** to start packing;
+        :System suggests the optimal **ShipmentBoxType** based on product volume;
+        :Display visual instructions fetched from **ProductAttribute**;
+        note right
+            Detailed Compartment Placement:
+            - Place **Main Guidebook** in center
+            - Place **Assembly Parts** in left slot
+            - Place **Manuals** in the side pocket
+        end note
+        
+        :Physically verify each item against the digital packing list;
+        :Arrange items into the suggested box compartments;
+        
+        partition "Task 3.3: Documentation" {
+            :Create **Shipment** and associated **ShipmentItem** records;
+            :Generate **ShipmentPackage** and link serials to **ShipmentPackageContent**;
+            :Generate a real-time **Invoice** for the customer;
+            :Print the **Invoice** and the **Shipping Label**;
+            :Place the printed **Invoice** inside the box for the customer;
+        }
+        
+        :Seal the box securely and apply the shipping label;
+        :Move the finalized box to the shipping area of the **Docking Station**;
+        
+    repeat while (Are there more Bins/Orders left in the current Cart?) is (yes)
+}
+
+partition #F4FDFB "Task 3.4: Finalization" {
+    :Record the **ItemIssuance** to officially deduct stock from inventory;
+    :Update the **OrderHeader** status to 'Completed';
+    :Update the **Shipment** status to 'Shipped' and notify the customer;
+}
+
+stop
+@enduml

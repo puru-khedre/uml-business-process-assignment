@@ -1,0 +1,192 @@
+erDiagram
+    ORDER_HEADER ||--o{ ORDER_ITEM : contains
+    ORDER_HEADER ||--o{ PICKLIST_BIN : groups
+    ORDER_HEADER ||--o{ SHIPMENT : generates
+    
+    ORDER_ITEM ||--o{ PICKLIST_ITEM : "item to pick"
+    
+    PRODUCT ||--o{ ORDER_ITEM : "ordered in"
+    PRODUCT ||--o{ INVENTORY_ITEM : "stock of"
+    PRODUCT ||--o{ PRODUCT_ASSOC : "associates from"
+    PRODUCT ||--o{ PRODUCT_ATTRIBUTE : "has metadata"
+    PRODUCT ||--o{ SHIPMENT_ITEM : "shipped in"
+    
+    LOT ||--o{ INVENTORY_ITEM : "groups stock"
+    
+    FACILITY ||--o{ FACILITY_LOCATION : "has spaces"
+    FACILITY ||--o{ PICKLIST : "work anchor"
+    FACILITY ||--o{ FIXED_ASSET : "contains carts"
+    
+    FACILITY_LOCATION ||--o{ INVENTORY_ITEM : "stores"
+    
+    FIXED_ASSET ||--o{ FIXED_ASSET_ATTRIBUTE : "metadata"
+    
+    PICKLIST ||--o{ PICKLIST_BIN : "organized in"
+    PICKLIST ||--o{ PICKLIST_ITEM : "tasks"
+    
+    PICKLIST_BIN ||--o{ PICKLIST_ITEM : "holds items"
+    
+    SHIPMENT ||--o{ SHIPMENT_ITEM : "contains items"
+    SHIPMENT ||--o{ SHIPMENT_PACKAGE : "packed in"
+    
+    SHIPMENT_BOX_TYPE ||--o{ SHIPMENT_PACKAGE : "defines size"
+    
+    SHIPMENT_ITEM ||--o{ SHIPMENT_PACKAGE_CONTENT : "packed into"
+    SHIPMENT_PACKAGE ||--o{ SHIPMENT_PACKAGE_CONTENT : "holds"
+    INVENTORY_ITEM ||--o{ SHIPMENT_PACKAGE_CONTENT : "serialized unit"
+    
+    PARTY ||--o{ PARTY_ROLE : "has duties"
+    PARTY ||--o{ USER_LOGIN : "authenticates"
+    ROLE_TYPE ||--o{ PARTY_ROLE : "defines role"
+
+    ORDER_HEADER {
+        string orderId PK
+        datetime orderDate
+        string statusId
+        string orderTypeId
+    }
+
+    ORDER_ITEM {
+        string orderId PK, FK
+        string orderItemSeqId PK
+        string productId FK
+        decimal quantity
+    }
+
+    PRODUCT {
+        string productId PK
+        string productTypeId
+        string internalName
+    }
+
+    INVENTORY_ITEM {
+        string inventoryItemId PK
+        string productId FK
+        string serialNumber
+        datetime datetimeReceived
+        string lotId FK
+        string facilityId FK
+        string locationSeqId FK
+    }
+
+    LOT {
+        string lotId PK
+        datetime creationDate
+    }
+
+    FACILITY {
+        string facilityId PK
+        string facilityName
+    }
+
+    FACILITY_LOCATION {
+        string facilityId PK, FK
+        string locationSeqId PK
+        string areaId
+        string locationTypeEnumId
+    }
+
+    PICKLIST {
+        string picklistId PK
+        string facilityId FK
+        string statusId
+    }
+
+    PICKLIST_ITEM {
+        string picklistId PK, FK
+        string picklistBinId PK, FK
+        string orderId PK, FK
+        string orderItemSeqId PK, FK
+        string inventoryItemId FK
+    }
+
+    PICKLIST_BIN {
+        string picklistBinId PK
+        string picklistId FK
+        string primaryOrderId FK
+    }
+
+    FIXED_ASSET {
+        string fixedAssetId PK
+        string fixedAssetTypeId
+        string locatedAtFacilityId FK
+    }
+
+    FIXED_ASSET_ATTRIBUTE {
+        string fixedAssetId PK, FK
+        string attrName PK
+        string attrValue
+    }
+
+    SHIPMENT {
+        string shipmentId PK
+        string primaryOrderId FK
+        string statusId
+    }
+
+    SHIPMENT_ITEM {
+        string shipmentId PK, FK
+        string shipmentItemSeqId PK
+        string productId FK
+        decimal quantity
+    }
+
+    SHIPMENT_PACKAGE {
+        string shipmentId PK, FK
+        string shipmentPackageSeqId PK
+        string shipmentBoxTypeId FK
+        decimal weight
+    }
+
+    SHIPMENT_PACKAGE_CONTENT {
+        string shipmentId PK, FK
+        string shipmentPackageSeqId PK, FK
+        string shipmentItemSeqId PK, FK
+        string inventoryItemId FK
+        decimal quantity
+    }
+
+    PRODUCT_ATTRIBUTE {
+        string productId PK, FK
+        string attrName PK
+        string attrValue
+    }
+
+    PARTY {
+        string partyId PK
+    }
+
+    PARTY_ROLE {
+        string partyId PK, FK
+        string roleTypeId PK, FK
+    }
+
+    SHIPMENT_BOX_TYPE {
+        string shipmentBoxTypeId PK
+        string description
+        decimal boxLength
+    }
+
+    ROLE_TYPE {
+        string roleTypeId PK
+        string description
+    }
+
+    USER_LOGIN {
+        string userLoginId PK
+        string partyId FK
+        char enabled
+    }
+
+    INVOICE {
+        string invoiceId PK
+        datetime invoiceDate
+        string statusId
+    }
+
+    PRODUCT_ASSOC {
+        string productId PK, FK
+        string productIdTo PK, FK
+        string productAssocTypeId PK
+        datetime fromDate PK
+    }

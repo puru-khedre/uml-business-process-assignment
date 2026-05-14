@@ -1,0 +1,51 @@
+graph TD
+    %% Styling
+    classDef default fill:#FFFFFF,stroke:#2C3E50,stroke-width:1px,color:#2C3E50;
+    classDef partition fill:#F4FDFB,stroke:#BDC3C7,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef warning fill:#FFEBEE,stroke:#E53935,color:#C62828;
+    classDef startStop fill:#2C3E50,color:#FFFFFF,stroke:none;
+
+    Title[<b>STAGE 2: WAREHOUSE PICKING</b>]:::default --> Start((Start)):::startStop
+    Start --> Initialization
+
+    subgraph Initialization [Task 2.1: Initialization]
+        P1[Login via UserLogin handheld app]
+        P2[Select Picklist - status Ready]
+        P3[Scan physical Cart fixedAssetId]
+        P4[Link Cart to Picker Session]
+        
+        P1 --> P2 --> P3 --> P4
+    end
+
+    subgraph Execution [Task 2.2: Execution]
+        E1[Display items sorted by FacilityLocation]
+        E2[Move to suggested shelf location]
+        E3[Confirm Product & PicklistBin number]
+        E4[Scan unique serialNumber]
+        E5{Correct Lot/Batch?}
+        E6[Show Warning: Incorrect Batch]:::warning
+        E7[Show 'Serial Verified' success]
+        E8[Scan linked Manual - ProductAssoc]
+        E9[Place both in PicklistBin slot]
+        
+        E1 --> E2 --> E3 --> E4 --> E5
+        E5 -- No --> E6 --> E2
+        E5 -- Yes --> E7 --> E8 --> E9
+        E9 --> Next{More items?}
+        Next -- Yes --> E1
+    end
+
+    subgraph Handover [Task 2.3: Handover]
+        H1[Set Picklist status to Picked]
+        H2[Record completion time & performance]
+        H3[Move Cart to Docking Station]
+        
+        H1 --> H2 --> H3
+    end
+
+    Initialization --> Execution --> Handover
+    Next -- No --> H1
+    H3 --> End((End)):::startStop
+
+    %% Apply Classes
+    class Initialization,Execution,Handover partition;

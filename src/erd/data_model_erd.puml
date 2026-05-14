@@ -1,0 +1,217 @@
+@startuml Guidebook_Fulfillment_ERD
+!theme plain
+skinparam linetype ortho
+
+' --- Foundation ---
+entity "OrderHeader" as OrderHeader {
+  * orderId : VARCHAR(20) <<PK>>
+  --
+  orderDate : DATETIME
+  statusId : VARCHAR(20)
+  orderTypeId : VARCHAR(20)
+}
+
+entity "OrderItem" as OrderItem {
+  * orderId : VARCHAR(20) <<PK>> <<FK>>
+  * orderItemSeqId : VARCHAR(20) <<PK>>
+  --
+  productId : VARCHAR(20) <<FK>>
+  quantity : DECIMAL
+  unitPrice : DECIMAL
+}
+
+' --- Product & Inventory ---
+entity "Product" as Product {
+  * productId : VARCHAR(20) <<PK>>
+  --
+  productTypeId : VARCHAR(20)
+  internalName : VARCHAR(255)
+}
+
+entity "Lot" as Lot {
+  * lotId : VARCHAR(20) <<PK>>
+  --
+  creationDate : DATETIME
+}
+
+entity "InventoryItem" as InventoryItem {
+  * inventoryItemId : VARCHAR(20) <<PK>>
+  --
+  productId : VARCHAR(20) <<FK>>
+  serialNumber : VARCHAR(100)
+  datetimeReceived : DATETIME
+  lotId : VARCHAR(20) <<FK>>
+  facilityId : VARCHAR(20) <<FK>>
+  locationSeqId : VARCHAR(20) <<FK>>
+}
+
+entity "ProductAssoc" as ProductAssoc {
+  * productId : VARCHAR(20) <<PK>> <<FK>>
+  * productIdTo : VARCHAR(20) <<PK>> <<FK>>
+  * productAssocTypeId : VARCHAR(20) <<PK>>
+  * fromDate : DATETIME <<PK>>
+  --
+  thruDate : DATETIME
+}
+
+' --- Warehouse ---
+entity "Facility" as Facility {
+  * facilityId : VARCHAR(20) <<PK>>
+  --
+  facilityName : VARCHAR(100)
+}
+
+entity "FacilityLocation" as FacilityLocation {
+  * facilityId : VARCHAR(20) <<PK>> <<FK>>
+  * locationSeqId : VARCHAR(20) <<PK>>
+  --
+  areaId : VARCHAR(20)
+  locationTypeEnumId : VARCHAR(20)
+}
+
+' --- Picking ---
+entity "FixedAsset" as FixedAsset {
+  * fixedAssetId : VARCHAR(20) <<PK>>
+  --
+  fixedAssetTypeId : VARCHAR(20)
+  locatedAtFacilityId : VARCHAR(20) <<FK>>
+}
+
+entity "FixedAssetAttribute" as FixedAssetAttribute {
+  * fixedAssetId : VARCHAR(20) <<PK>> <<FK>>
+  * attrName : VARCHAR(60) <<PK>>
+  --
+  attrValue : VARCHAR(255)
+}
+
+entity "Picklist" as Picklist {
+  * picklistId : VARCHAR(20) <<PK>>
+  --
+  facilityId : VARCHAR(20) <<FK>>
+  statusId : VARCHAR(20)
+}
+
+entity "PicklistBin" as PicklistBin {
+  * picklistBinId : VARCHAR(20) <<PK>>
+  --
+  picklistId : VARCHAR(20) <<FK>>
+  primaryOrderId : VARCHAR(20) <<FK>>
+}
+
+entity "PicklistItem" as PicklistItem {
+  * picklistId : VARCHAR(20) <<PK>> <<FK>>
+  * picklistBinId : VARCHAR(20) <<PK>> <<FK>>
+  * orderId : VARCHAR(20) <<PK>> <<FK>>
+  * orderItemSeqId : VARCHAR(20) <<PK>> <<FK>>
+  --
+  inventoryItemId : VARCHAR(20) <<FK>>
+}
+
+' --- Packing & Shipping ---
+entity "Shipment" as Shipment {
+  * shipmentId : VARCHAR(20) <<PK>>
+  --
+  primaryOrderId : VARCHAR(20) <<FK>>
+  statusId : VARCHAR(20)
+}
+
+entity "ShipmentItem" as ShipmentItem {
+  * shipmentId : VARCHAR(20) <<PK>> <<FK>>
+  * shipmentItemSeqId : VARCHAR(20) <<PK>>
+  --
+  productId : VARCHAR(20) <<FK>>
+  quantity : DECIMAL
+}
+
+entity "ShipmentBoxType" as ShipmentBoxType {
+  * shipmentBoxTypeId : VARCHAR(20) <<PK>>
+  --
+  description : TEXT
+  boxLength : DECIMAL
+}
+
+entity "ShipmentPackage" as ShipmentPackage {
+  * shipmentId : VARCHAR(20) <<PK>> <<FK>>
+  * shipmentPackageSeqId : VARCHAR(20) <<PK>>
+  --
+  shipmentBoxTypeId : VARCHAR(20) <<FK>>
+  weight : DECIMAL
+}
+
+entity "ShipmentPackageContent" as ShipmentPackageContent {
+  * shipmentId : VARCHAR(20) <<PK>> <<FK>>
+  * shipmentPackageSeqId : VARCHAR(20) <<PK>> <<FK>>
+  * shipmentItemSeqId : VARCHAR(20) <<PK>> <<FK>>
+  --
+  inventoryItemId : VARCHAR(20) <<FK>>
+  quantity : DECIMAL
+}
+
+' --- Roles ---
+entity "Party" as Party {
+  * partyId : VARCHAR(20) <<PK>>
+}
+
+entity "RoleType" as RoleType {
+  * roleTypeId : VARCHAR(20) <<PK>>
+  --
+  description : TEXT
+}
+
+entity "PartyRole" as PartyRole {
+  * partyId : VARCHAR(20) <<PK>> <<FK>>
+  * roleTypeId : VARCHAR(20) <<PK>> <<FK>>
+}
+
+entity "UserLogin" as UserLogin {
+  * userLoginId : VARCHAR(250) <<PK>>
+  --
+  partyId : VARCHAR(20) <<FK>>
+  enabled : CHAR(1)
+}
+
+' --- Misc ---
+entity "ProductAttribute" as ProductAttribute {
+  * productId : VARCHAR(20) <<PK>> <<FK>>
+  * attrName : VARCHAR(60) <<PK>>
+  --
+  attrValue : VARCHAR(255)
+}
+
+entity "Invoice" as Invoice {
+  * invoiceId : VARCHAR(20) <<PK>>
+  --
+  statusId : VARCHAR(20)
+  invoiceDate : DATETIME
+}
+
+' --- Relationships ---
+OrderHeader ||--o{ OrderItem
+OrderHeader ||--o{ PicklistBin
+OrderHeader ||--o{ Shipment
+OrderItem ||--o{ PicklistItem
+Product ||--o{ OrderItem
+Product ||--o{ InventoryItem
+Product ||--o{ ProductAssoc
+Product ||--o{ ShipmentItem
+Product ||--o{ ProductAttribute
+Lot ||--o{ InventoryItem
+Facility ||--o{ FacilityLocation
+Facility ||--o{ Picklist
+Facility ||--o{ FixedAsset
+FacilityLocation ||--o{ InventoryItem
+FixedAsset ||--o{ FixedAssetAttribute
+Picklist ||--o{ PicklistBin
+Picklist ||--o{ PicklistItem
+PicklistBin ||--o{ PicklistItem
+Shipment ||--o{ ShipmentItem
+Shipment ||--o{ ShipmentPackage
+ShipmentBoxType ||--o{ ShipmentPackage
+ShipmentItem ||--o{ ShipmentPackageContent
+ShipmentPackage ||--o{ ShipmentPackageContent
+InventoryItem ||--o{ ShipmentPackageContent
+Party ||--o{ PartyRole
+Party ||--o{ UserLogin
+RoleType ||--o{ PartyRole
+
+@enduml

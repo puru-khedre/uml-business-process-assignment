@@ -1,0 +1,55 @@
+graph TD
+    %% Styling
+    classDef default fill:#FFFFFF,stroke:#2C3E50,stroke-width:1px,color:#2C3E50;
+    classDef partition fill:#F4FDFB,stroke:#BDC3C7,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef startStop fill:#2C3E50,color:#FFFFFF,stroke:none;
+
+    Title[<b>STAGE 3: PACKING & INVOICING</b>]:::default --> Start((Start)):::startStop
+    Start --> Reception
+
+    subgraph Reception [Task 3.1: Reception]
+        R1[Scan fixedAssetId of Cart]
+        R2[Display PicklistBin entries]
+        R3[Identify priority orders]
+        
+        R1 --> R2 --> R3
+    end
+
+    subgraph Packing [Task 3.2: Systematic Packing]
+        PK1[Select & Scan specific PicklistBin]
+        PK2[System suggests ShipmentBoxType]
+        PK3[Show instructions: Main in Center, Parts in Left, Manuals in Pocket]
+        PK4[Physically verify items against list]
+        PK5[Arrange in Box Compartments]
+        
+        PK1 --> PK2 --> PK3 --> PK4 --> PK5
+        
+        subgraph Documentation [Task 3.3: Documentation]
+            D1[Create Shipment & ShipmentItem]
+            D2[Map serial to ShipmentPackageContent]
+            D3[Generate real-time Invoice]
+            D4[Print Invoice & Shipping Label]
+            D5[Place Invoice inside box & seal]
+            
+            D1 --> D2 --> D3 --> D4 --> D5
+        end
+        
+        PK5 --> Documentation
+        D5 --> Next{More Bins in Cart?}
+    end
+
+    subgraph Accounting [Task 3.4: Finalization]
+        F1[Record ItemIssuance deduction]
+        F2[Update OrderHeader to Completed]
+        F3[Set Shipment status to Shipped]
+        
+        F1 --> F2 --> F3
+    end
+
+    Reception --> Packing
+    Next -- Yes --> PK1
+    Next -- No --> Accounting
+    F3 --> End((End)):::startStop
+
+    %% Apply Classes
+    class Reception,Packing,Accounting,Documentation partition;

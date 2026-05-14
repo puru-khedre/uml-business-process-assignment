@@ -1,0 +1,50 @@
+graph TD
+    %% Styling
+    classDef default fill:#FFFFFF,stroke:#2C3E50,stroke-width:1px,color:#2C3E50;
+    classDef partition fill:#F4FDFB,stroke:#BDC3C7,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef startStop fill:#2C3E50,color:#FFFFFF,stroke:none;
+
+    Title[<b>STAGE 1: SYSTEM LOGIC</b>]:::default --> Start((Start)):::startStop
+    Start --> Discovery
+
+    subgraph Discovery [Task 1.1: Order Discovery]
+        Step1[Identify Approved OrderHeader records]
+        Step2[Filter Guidebook OrderItems]
+        Step3[Group by productId]
+        Step4[Sort by orderDate - FIFO]
+        
+        Step1 --> Step2 --> Step3 --> Step4
+    end
+
+    subgraph Planning [Task 1.2: Cart Planning]
+        Plan1[Find available FixedAsset Carts]
+        Plan2[Read maxUnitCapacity from Attribute]
+        Plan3[Initialize new Picklist linked to Cart]
+        
+        Plan1 --> Plan2 --> Plan3
+    end
+
+    subgraph Assignment [Task 1.3: Lot & Bin Assignment]
+        A1[Fetch next Order from group]
+        A2[Calculate Total Units - Main + Manuals]
+        A3{Capacity Available?}
+        A4[Query oldest Lot - datetimeReceived]
+        A5[Identify Manual via ProductAssoc]
+        A6[Create PicklistBin - Physical Slot]
+        A7[Map Guidebook & Manual to PicklistItem]
+        A8[Update Cart Running Total]
+        A9[Hold Order for next Batch]
+        
+        A1 --> A2 --> A3
+        A3 -- Yes --> A4 --> A5 --> A6 --> A7 --> A8
+        A8 --> Next{More Orders?}
+        A3 -- No --> A9
+        Next -- Yes --> A1
+    end
+
+    Discovery --> Planning --> Assignment
+    Next -- No --> Final[Set Picklist to Ready]
+    Final --> End((End)):::startStop
+
+    %% Apply Classes
+    class Discovery,Planning,Assignment partition;

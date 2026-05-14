@@ -1,0 +1,100 @@
+# DETAILED DATA MODELING SPECIFICATION: GUIDEBOOK FULFILLMENT
+
+This document provides a deep dive into the OFBiz entities selected for the guidebook fulfillment system. It explains the purpose of each entity, the specific fields to be utilized, and how they collectively fulfill the business requirements.
+
+---
+
+## 1. Product & Inventory Management (The Master Data)
+
+### Product
+*   **Detailed Explanation**: This is the core entity that defines what we are selling or handling. It stores the static information about guidebooks and manuals.
+*   **Fields to Utilize**: `productId`, `productTypeId`, `internalName`.
+*   **Utilization Logic**: We categorize guidebooks as 'FINISHED_GOOD' and manuals as 'RAW_MATERIAL' or 'COMPONENT'. When an order comes in, the system uses the `productId` to look up all related metadata needed for fulfillment.
+
+### InventoryItem
+*   **Detailed Explanation**: Represents the actual physical stock. Since our guidebooks are serialized, each unit in the warehouse has its own record here.
+*   **Fields to Utilize**: `inventoryItemId`, `serialNumber`, `datetimeReceived`, `lotId`, `locationSeqId`.
+*   **Utilization Logic**: 
+    *   **Serial Tracking**: The `serialNumber` field is used to validate each scan during picking and packing. 
+    *   **FIFO (Earliest Batch)**: The `datetimeReceived` field stores the timestamp when the stock entered the warehouse. To fulfill the "earliest batch first" requirement, the system sorts these items by this date in ascending order and suggests the oldest one first.
+    *   **Batch Link**: The `lotId` field links this specific unit to its production batch (Lot).
+
+### Lot
+*   **Detailed Explanation**: Used to group inventory items that were produced together in a single run.
+*   **Fields to Utilize**: `lotId`, `creationDate`, `expirationDate`.
+*   **Utilization Logic**: It fulfills the **"Batch-based picking"** requirement. If a customer or auditor asks which production run a guidebook belongs to, we use the `lotId` from the `InventoryItem` to find the batch details here.
+
+### ProductAssoc
+*   **Detailed Explanation**: Defines the relationship between two products.
+*   **Fields to Utilize**: `productId`, `productIdTo`, `productAssocTypeId`.
+*   **Utilization Logic**: To fulfill the **"Accessories with Guidebook"** requirement, we create a link where `productId` is the Guidebook and `productIdTo` is the Manual. The `productAssocTypeId` is set to 'PRODUCT_COMPONENT'. When the system generates a picklist for a guidebook, it automatically checks this table to add the required manual to the picker's list.
+
+---
+
+## 2. Warehouse & Equipment (The Infrastructure)
+
+### FixedAsset (Picking Cart)
+*   **Detailed Explanation**: Represents the physical equipment (the cart) used by the picker to move items from shelves to the docking station.
+*   **Fields to Utilize**: `fixedAssetId`, `fixedAssetTypeId`, `locatedAtFacilityId`.
+*   **Utilization Logic**: Each cart is registered as a `FixedAsset` with a type of 'PICKING_CART'. When a picker starts a job, the system assigns an available `fixedAssetId` to the current `Picklist`.
+
+### FixedAssetAttribute (Cart Capacity)
+*   **Detailed Explanation**: A flexible way to store metadata about an asset that isn't in the standard table.
+*   **Fields to Utilize**: `attrName`, `attrValue`.
+*   **Utilization Logic**: To fulfill the **"Cart Capacity"** requirement, we store an attribute named `maxUnitCapacity` with a value like `50`. During the order grouping phase, the system calculates the total volume of items and ensures it doesn't exceed this limit before assigning a Picklist to the cart.
+
+### FacilityLocation
+*   **Detailed Explanation**: Maps the physical layout of the warehouse (Aisles, Shelves, Bins).
+*   **Fields to Utilize**: `locationSeqId`, `areaId`, `locationTypeEnumId`.
+*   *Utilization Logic**: 
+    *   **Picking Zones**: The `areaId` field is used to group locations (e.g., Zone A for Guidebooks, Zone B for Accessories). This helps in routing the picker efficiently.
+    *   **Docking Station**: Locations with a specific `locationTypeEnumId` (like 'DOCK_STATION') represent the packing tables where the final quality check and boxing happen.
+
+---
+
+## 3. Orders & Execution (The Workflow)
+
+### OrderHeader & OrderItem
+*   **Detailed Explanation**: The original customer request.
+*   **Fields to Utilize**: `orderId`, `productId`, `quantity`, `statusId`.
+*   **Utilization Logic**: These act as the source of truth. Every pick and pack action is tracked back to a specific `orderId` and `orderItemSeqId`.
+
+### Picklist & PicklistBin
+*   **Detailed Explanation**: A Picklist is the "to-do list" for a picker. A PicklistBin groups items belonging to the same order within that list.
+*   **Fields to Utilize**: `picklistId`, `binNumber`, `primaryOrderId`.
+*   **Utilization Logic**: Fulfills the **"System will group orders"** requirement. Instead of picking one order at a time, the system groups multiple orders into one `Picklist` (one cart job) to increase efficiency.
+
+### PicklistItem
+*   **Detailed Explanation**: The most granular level of picking.
+*   **Fields to Utilize**: `inventoryItemId`, `itemStatusId`.
+*   **Utilization Logic**: This entity records the exact `inventoryItemId` (and thus the serial number) that the picker physically touched and placed into the cart.
+
+---
+
+## 4. Packing & Billing (The Final Stage)
+
+### ShipmentPackage & ShipmentPackageContent
+*   **Detailed Explanation**: Represents the physical box and its contents.
+*   **Fields to Utilize**: `shipmentPackageSeqId`, `inventoryItemId`, `quantity`.
+*   **Utilization Logic**: Fulfills the **"Suggested Box"** requirement. When the packer scans an item, the system records it in `ShipmentPackageContent`. This confirms that the item is no longer in the cart and is now inside a sealed box.
+
+### ProductAttribute (Compartments & Instructions)
+*   **Detailed Explanation**: Stores product-specific rules for packing.
+*   **Fields to Utilize**: `attrName`, `attrValue`.
+*   **Utilization Logic**: 
+    *   **Box Compartments**: We use an attribute `COMPARTMENT_ID` (e.g., "Slot 1") to tell the packer exactly where to place the item inside a multi-compartment box.
+    *   **Packing Instructions**: An attribute `PACKING_INSTR` stores text like "Scan manual before placing" which the system fetches and displays on the packer's screen in real-time.
+
+### Invoice
+*   **Detailed Explanation**: The final financial document.
+*   **Fields to Utilize**: `invoiceId`, `statusId`, `invoiceDate`.
+*   **Utilization Logic**: Fulfills the **"Real-time Invoicing"** requirement. The system is configured to trigger the invoice generation service automatically as soon as the last item of a shipment is marked as "Packed".
+
+---
+
+## 5. Personnel & Accountability (Roles)
+
+### RoleType & PartyRole
+*   **Detailed Explanation**: Defines who is allowed to do what.
+*   **Fields to Utilize**: `roleTypeId`, `partyId`.
+*   **Utilization Logic**: We define roles for 'PICKER' and 'PACKER'. Only employees (Parties) with these roles assigned can log into the respective mobile screens. This ensures accountability and security during the fulfillment process.

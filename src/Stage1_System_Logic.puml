@@ -1,0 +1,62 @@
+@startuml
+skinparam {
+    DefaultFontName "Segoe UI"
+    DefaultFontSize 12
+    BackgroundColor white
+    ActivityBackgroundColor #FFFFFF
+    ActivityBorderColor #2C3E50
+    ActivityFontSize 13
+    ArrowColor #2C3E50
+    DiamondBackgroundColor #FFFFFF
+    DiamondBorderColor #2C3E50
+    RoundCorner 15
+    Shadowing false
+}
+
+title Stage 2: Warehouse Picking (Picker Operations)
+
+start
+
+partition #F4FDFB "Phase 1: Starting the Assignment" {
+    :Picker logs into the handheld app using their **UserLogin** credentials;
+    :View and select a **Picklist** from the list of 'Ready' assignments;
+    :Scan the physical Cart barcode to confirm the **fixedAssetId**;
+    :System validates the cart and links it to the picker's session;
+}
+
+partition #F0F8FF "Phase 2: Executing the Picking Path" {
+    :Display a consolidated list of items sorted by **FacilityLocation**;
+    note right: Picker follows the most efficient path (Aisle -> Shelf)
+    
+    repeat
+        :Move to the suggested shelf location shown on the screen;
+        :Confirm the Product Name and assigned **PicklistBin** number;
+        
+        partition "Scanning & Validation Logic" {
+            :Scan the unique **serialNumber** barcode on the guidebook;
+            if (Serial belongs to the oldest suggested **lotId**?) then (no)
+                :Show Warning: "Incorrect Batch. Please pick from Lot [lotId]"; <<#FFEBEE>>
+                :Picker returns item and finds the correct batch;
+            else (yes)
+                :Show 'Serial Verified' checkmark on the screen;
+            endif
+        }
+        
+        partition "Accessory Handling" {
+            :Prompt the picker to scan the linked Manual barcode;
+            :Scan the Manual to verify it matches the **ProductAssoc**;
+            :Place both Guidebook and Manual into the assigned **PicklistBin** slot;
+            :Confirm placement on the handheld device;
+        }
+        
+    repeat while (Are there more line items remaining in the Picklist?) is (yes)
+}
+
+partition #F4FDFB "Phase 3: Completion & Handover" {
+    :Mark the **Picklist** as 'Picked' in the system;
+    :Record the exact completion time for performance tracking;
+    :Physically move the loaded Cart to the designated **Docking Station**;
+}
+
+stop
+@enduml
